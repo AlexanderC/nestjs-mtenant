@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  **[WIP]** An module to enable multitenancy support with deep integration into the system as whole.
+  **[WIP]** A module to enable multitenancy support with deep integration into the system as whole.
 </p>
 
 <p align="center">
@@ -13,6 +13,14 @@
   <a href="https://npmjs.com/package/nestjs-mtenant"><img src="https://img.shields.io/npm/l/nestjs-mtenant.svg" alt="Package License" /></a>
   <a href="https://npmjs.com/package/nestjs-mtenant"><img src="https://img.shields.io/npm/dm/nestjs-mtenant.svg" alt="NPM Downloads" /></a>
 </p>
+
+### Rationale
+
+Multitenancy is widely used acros the web as software deployment options called **whitelabels**. Data in between tenants are separated,
+however nowadays there is business by sharing data inbetween the peer businesses; as an example might serve a E-commerce platform that shares
+their clients with twin/friendly shop, or there's some unified backoffice interface... Thus a good idea would be
+**having the data under the same database (think namespace)** instead of having to separate into different databases,
+in order to be able to query it efficiently and avoid duplication or synchronization issues.
 
 ### Installation
 
@@ -54,13 +62,18 @@ export default class Book extends Model<Book> {
 }
 ```
 
+> Tenant Entity is enhanced with the following properties:
+> ```typescript
+> export interface TenantEntity {
+>   getTenant(): string; // e.g. "root"
+>   getTenantId(): string; // e.g. "root/33"
+> }
+> ```
+
 And finaly include the module and the service *(assume using [Nestjs Configuration](https://docs.nestjs.com/techniques/configuration))*:
 ```typescript
 // src/app.module.ts
-import {
-  MTModule, MTModuleOptions, TenantTransport,
-  MT_HEADER_NAME, DEFAULT_TENANT,
-} from 'nestjs-mtenant';
+import { MTModule, MTModuleOptions } from 'nestjs-mtenant';
 
 @Module({
   imports: [
@@ -68,48 +81,73 @@ import {
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        return <MTModuleOptions>{ ...{ // default options...
-          transport?: TenantTransport.HEADER,
-          headerName?: MT_HEADER_NAME,
-          defaultTenant?: DEFAULT_TENANT,
-        }, ...configService.get<MTModuleOptions>('multitenant')};
+        return configService.get<MTModuleOptions>('multitenancy');
       },
     }),
   ],
 },
 ```
 
+> Configuration reference:
+> 
+> ```typescript
+> export interface MTModuleOptions {
+>   transport?: TenantTransport; // Tenant transport: header
+>   headerName?: string; // Header name to extract tenant from (if transport=header specified)
+>   defaultTenant?: string; // Tenant to assign by default
+>   allowTenant?: (context: TenantContext, tenant: string) => boolean; // Allow certain requested tenant
+>   allowMissingTenant?: boolean; // Get both IS NULL and tenant scopes on querying
+> }
+> ```
+
 ### Usage
 
-Let's suppose you have a `BooksService`:
+There's literally nothing to configure, expect a decorator 
+to enrich Swagger docs by adding description of tenancy transport (e.g. through an `@ApiHeader()`)
+in your controllers that support multi-tenancy:
 
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { MTService } from 'nestjs-mtenant';
-import Book from './models/book.model';
+import { MTApi } from 'nestjs-mtenant';
 
-@Injectable()
-export class BooksService {
-  constructor(
-    @InjectModel(Book) private bookModel: typeof Book,
-    private tenancyService: MTService, 
-  ) {
-    // this line is extremely important and the only one required
-    tenancyService.withTenancy(bookModel);
-  }
+@MTApi()
+@Controller()
+export class BooksController { }
+```
 
-  public async create(...args): Promise<Book> {
-    return this.bookModel.create(...args);
-  }
+> Tenancy scope taken from the transport specified will be injected into instances and queries.
+> If `allowMissingTenant=true` specified- queries will select entries for both- the tenant and missing tenant.
 
-  public async findById(id: number): Promise<Book> {
-    return this.bookModel.findByPk<Book>(id);
+`nestjs-mtenant` integrates pretty well with the [`nestjs-iacry`](https://github.com/AlexanderC/nestjs-iacry#readme) module:
+
+```typescript
+// models/user.model.ts
+import { IACryEntity } from 'nestjs-iacry';
+import { MTEntity } from 'nestjs-mtenant';
+
+@MTEntity() 
+@IACryEntity({ nameField: 'principal' })
+@Table({})
+export default class User extends Model<User> {
+  id: string; // idField
+  tenant: string; // tenantField
+  role?: string;
+
+  // Get principals like "root/admin:33"
+  @Column(DataType.VIRTUAL)
+  get principal() {
+    return `${this.getDataValue('tenant')}/${this.getDataValue('role')}`;
   }
-  
-  public async findAll(...args): Promise<Array<Book>> {
-    return this.bookModel.findAll(...args);
-  }
+}
+```
+
+An example of `nestjs-iacry` policy would look like:
+
+```typescript
+// Allow everything for admins from any tenant
+{
+  Effect: Effect.ALLOW,
+  Action: '*',
+  Principal: `*/${UserRoles.Admin}`,
 }
 ```
 
@@ -130,6 +168,7 @@ npm run deploy
 ### TODO
 
 - [ ] Add support for TypeORM
+- [ ] Add support for strategies (e.g. different database, table suffix)
 - [ ] Cover most of codebase w/ tests
 - [ ] Add comprehensive Documentation
 

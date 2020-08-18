@@ -1,13 +1,14 @@
+import { Inject } from '@nestjs/common';
 import {
   DEFAULT_ENTITY_OPTIONS,
   TENANT_ENTITY_METADATA_FIELD,
-  TENANT_SERVICE_METADATA_FIELD,
 } from './constants';
 import {
   TenancyEntityOptions,
   TenantEntity,
 } from '../interfaces/core.interface';
 import { enhanceTenantEntity } from './tenant.entity';
+import { CoreService } from '../core.service';
 
 export interface EntityOptions {
   tenantField?: string;
@@ -21,25 +22,13 @@ export function isTenantEntity(target: unknown): target is TenantEntity {
   );
 }
 
-export function getTenantService(target: Function): any {
-  if (!Reflect.hasMetadata(TENANT_SERVICE_METADATA_FIELD, target)) {
-    return null;
-  }
-
-  return Reflect.getMetadata(TENANT_SERVICE_METADATA_FIELD, target);
-}
-
-export function setTenantService(target: Function, service: any): Function {
-  Reflect.defineMetadata(TENANT_SERVICE_METADATA_FIELD, service, target);
-  return target;
-}
-
 /**
  * @use @Entity()
  *      @Entity({ tenantField?: 'tenant', idField?: 'id' })
  */
 export function Entity(options?: EntityOptions): ClassDecorator {
   return (target: Function) => {
+    const service = <CoreService>(<any>Inject(CoreService));
     const tenancyOptions: TenancyEntityOptions = Object.assign(
       {},
       DEFAULT_ENTITY_OPTIONS,
@@ -50,12 +39,6 @@ export function Entity(options?: EntityOptions): ClassDecorator {
     Reflect.defineMetadata(TENANT_ENTITY_METADATA_FIELD, true, target);
 
     /** Implement TenantEntity */
-    target.prototype.isTenant = function (): boolean {
-      return true;
-    };
-    target.prototype.getTenancyOptions = function (): TenancyEntityOptions {
-      return tenancyOptions;
-    };
     target.prototype.getTenant = function (): string {
       return this[tenancyOptions.tenantField];
     };
@@ -67,6 +50,6 @@ export function Entity(options?: EntityOptions): ClassDecorator {
     };
 
     /** Add hooks */
-    enhanceTenantEntity(target, tenancyOptions);
+    enhanceTenantEntity(target, tenancyOptions, service);
   };
 }

@@ -9,4 +9,6 @@ export const DEFAULT_OPTIONS = <Options>{
   transport: DEFAULT_TRANSPORT,
   headerName: MT_HEADER_NAME,
   defaultTenant: DEFAULT_TENANT,
+  allowTenant: () => true,
+  allowMissingTenant: true,
 };

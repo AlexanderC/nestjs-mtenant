@@ -2,7 +2,7 @@
   "name": "nestjs-mtenant",
   "version": "0.0.0",
   "private": false,
-  "description": "NestJS - an module to enable multitenancy support with deep integration into the system as whole",
+  "description": "NestJS - a module to enable multitenancy support with deep integration into the system as whole",
   "keywords": [
     "nest",
     "tenant",
@@ -31,7 +31,7 @@
     "major": "npm run release -- --release-as major",
     "minor": "npm run release -- --release-as minor",
     "patch": "npm run release -- --release-as patch",
-    "release": "standard-version",
+    "release": "npx standard-version",
     "test": "npx jest",
     "test:watch": "npx jest --watch"
   },
@@ -91,7 +91,6 @@
   "peerDependencies": {
     "@nestjs/common": "^7.0.9",
     "@nestjs/core": "^7.0.9",
-    "@nestjs/platform-fastify": "^7.3.1",
-    "@nestjs/platform-express": "^7.4.2"
+    "@nestjs/swagger": "^4.5.12"
   }
 }

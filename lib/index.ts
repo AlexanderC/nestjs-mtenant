@@ -11,7 +11,6 @@ export {
 } from './constants';
 export {
   TENANT_ENTITY_METADATA_FIELD,
-  TENANT_SERVICE_METADATA_FIELD,
   TENANT_FIELD,
   ID_FIELD,
   DEFAULT_ENTITY_OPTIONS,
@@ -33,6 +32,7 @@ export {
   Entity as MTEntity,
   EntityOptions as MTEntityOptions,
 } from './decorators/entity';
+export { Api as MTApi, ApiOptions as MTApiOptions } from './decorators/api';
 
 /** Internals */
 export {
@@ -43,6 +43,7 @@ export {
   TenantContext,
   TenantEntityDto,
   TenancyScope,
+  TenantGuard,
 } from './interfaces/core.interface';
 export { Transport } from './transports/transport.interface';
 
