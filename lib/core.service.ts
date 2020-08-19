@@ -6,10 +6,12 @@ import {
   TenantTransport,
   TenantContext,
   TenancyScope,
+  TenantEntity,
 } from './interfaces/core.interface';
 import { HeaderTransport } from './transports/header.transport';
 import { Transport } from './transports/transport.interface';
 import { MT_OPTIONS, DEFAULT_OPTIONS } from './constants';
+import { injectTenancyService } from './decorators/entity';
 
 @Injectable()
 export class CoreService {
@@ -20,8 +22,32 @@ export class CoreService {
     this.setup(options);
   }
 
-  async injectTenancyScope(context: TenantContext): Promise<void> {
-    this.cls.setContext({ tenant: await this.getTenant(context) });
+  async withTenancyScope(
+    context: TenantContext,
+    handler: Function,
+  ): Promise<any> {
+    this.cls.setContext({
+      tenant: await this.getTenant(context),
+      enabled: true,
+    });
+    return handler();
+  }
+
+  async setTenant(
+    tenant: string,
+    context?: TenantContext,
+  ): Promise<CoreService> {
+    if (!(await this.options.allowTenant(context || {}, tenant))) {
+      throw new NotAcceptableException(`Tenant "${tenant}" not allowed`);
+    }
+
+    this.cls.setContext({ tenant, enabled: true });
+    return this;
+  }
+
+  disableTenancyForCurrentScope(): CoreService {
+    this.cls.setContext({ tenant: null, enabled: true });
+    return this;
   }
 
   async getTenant(context: TenantContext): Promise<string> {
@@ -55,6 +81,13 @@ export class CoreService {
         );
     }
 
-    this.cls.setRootContext({ tenant: this.options.defaultTenant });
+    this.cls.setRootContext({
+      tenant: this.options.defaultTenant,
+      enabled: true,
+    });
+
+    for (const entity of this.options.for) {
+      injectTenancyService(entity as TenantEntity, this);
+    }
   }
 }

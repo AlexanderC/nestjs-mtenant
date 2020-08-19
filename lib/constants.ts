@@ -5,7 +5,7 @@ export const MT_OPTIONS = 'MT_OPTIONS';
 export const MT_HEADER_NAME = 'X-Tenant-ID';
 export const DEFAULT_TRANSPORT = TenantTransport.HEADER;
 export const DEFAULT_TENANT = 'root';
-export const DEFAULT_OPTIONS = <Options>{
+export const DEFAULT_OPTIONS = <Partial<Options>>{
   transport: DEFAULT_TRANSPORT,
   headerName: MT_HEADER_NAME,
   defaultTenant: DEFAULT_TENANT,

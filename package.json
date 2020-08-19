@@ -24,7 +24,6 @@
     "Alex Cucer <alexander.moldova@gmail.com>"
   ],
   "scripts": {
-    "prebuild": "npx rimraf dist",
     "build": "npx tsc -p tsconfig.json",
     "deploy": "sh ./publish.sh",
     "format": "npx prettier **/**/*.ts --ignore-path ./.prettierignore --write",

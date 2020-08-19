@@ -92,6 +92,7 @@ import { MTModule, MTModuleOptions } from 'nestjs-mtenant';
 > 
 > ```typescript
 > export interface MTModuleOptions {
+>   for: Array<TenantEntity | Function>, // Entities to handle, e.g. [BookModel, UserModel]
 >   transport?: TenantTransport; // Tenant transport: header
 >   headerName?: string; // Header name to extract tenant from (if transport=header specified)
 >   defaultTenant?: string; // Tenant to assign by default
@@ -116,6 +117,56 @@ export class BooksController { }
 
 > Tenancy scope taken from the transport specified will be injected into instances and queries.
 > If `allowMissingTenant=true` specified- queries will select entries for both- the tenant and missing tenant.
+
+Switch model tenancy globally:
+
+```typescript
+BookModel.switchTenancy(/* enabled =*/ false)
+```
+
+Switch model tenancy for a single operation (*e.g. super-admin related ops*):
+
+```typescript
+// supports any operation supporting option parameter, incl. bulk ones
+BookModel.create({...}, { disableTenancy: true });
+// for complex operations with includes
+UserModel.findAll({
+  disableTenancy: true,
+  include: [ { model: BookModel } ],
+});
+// ... or disable only for BookModel
+UserModel.findAll({
+  include: [ { model: BookModel, disableTenancy: true } ],
+});
+```
+
+Setting custom tenant or disabling tenancy for the current request scope:
+
+```typescript
+import { MTService } from 'nestjs-mtenant';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectModel(User) private userModel: typeof User,
+    private readonly tenancyService: MTService,
+  ) { }
+
+  // Will enforce using it for subsequent model operations within the scope
+  // e.g. (await BooksService.useCustomTenant('custom-one')).create(...)
+  async useCustomTenant(tenant: string) {
+    await this.tenancyService.setTenant(tenant);
+    return this;
+  }
+
+  // Disabling tenancy for the current request scope (e.g. controller)
+  // You might need to disable tenancy without changing subsequent services logic
+  async disableTenancy() {
+    this.tenancyService.disableTenancyForCurrentScope();
+    return this;
+  }
+}
+```
 
 `nestjs-mtenant` integrates pretty well with the [`nestjs-iacry`](https://github.com/AlexanderC/nestjs-iacry#readme) module:
 

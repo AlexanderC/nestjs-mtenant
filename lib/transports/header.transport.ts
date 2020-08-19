@@ -7,7 +7,7 @@ export class HeaderTransport implements Transport {
   extract(context: TenantContext): string {
     const normalizeHeaderName = this.normalizeHeaderName(this.headerName);
 
-    for (const header in context.headers || {}) {
+    for (const header of Object.keys(context.headers || {})) {
       if (this.normalizeHeaderName(header) === normalizeHeaderName) {
         return context.headers[header];
       }

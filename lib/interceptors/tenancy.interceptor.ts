@@ -17,7 +17,6 @@ export class TenancyInterceptor implements NestInterceptor {
     next: CallHandler,
   ): Promise<Observable<any>> {
     const request: TenantContext = context.switchToHttp().getRequest();
-    await this.coreService.injectTenancyScope(request);
-    return next.handle();
+    return this.coreService.withTenancyScope(request, () => next.handle());
   }
 }
