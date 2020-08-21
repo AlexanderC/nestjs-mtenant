@@ -3,8 +3,10 @@ export { CoreModule as MTModule } from './core.module';
 
 /** Constants **/
 export {
+  MT_SCOPE_KEY,
   MT_OPTIONS,
   MT_HEADER_NAME,
+  MT_QUERY_PARAMETER_NAME,
   DEFAULT_TRANSPORT,
   DEFAULT_TENANT,
   DEFAULT_OPTIONS,
@@ -26,8 +28,8 @@ export { OptionsFactory as MTModuleOptionsFactory } from './interfaces/module-op
 /** Services **/
 export { CoreService as MTService } from './core.service';
 
-/** Interceptors */
-export { TenancyInterceptor } from './interceptors/tenancy.interceptor';
+/** Middlewares */
+export { TenancyMiddleware } from './middlewares/tenancy.middleware';
 
 /** Decorators */
 export {

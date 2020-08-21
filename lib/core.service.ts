@@ -1,5 +1,10 @@
-import { Injectable, Inject, NotAcceptableException } from '@nestjs/common';
-import { ContinuationLocalStorage } from 'asyncctx';
+import {
+  Injectable,
+  Inject,
+  NotAcceptableException,
+  Scope,
+} from '@nestjs/common';
+import { AsyncContext } from '@nestjs-steroids/async-context';
 import { BaseError } from './errors/mtenant.error';
 import { Options } from './interfaces/module.options';
 import {
@@ -8,29 +13,32 @@ import {
   TenancyScope,
   TenantEntity,
 } from './interfaces/core.interface';
-import { HeaderTransport } from './transports/header.transport';
+import { HttpTransport } from './transports/http.transport';
 import { Transport } from './transports/transport.interface';
-import { MT_OPTIONS, DEFAULT_OPTIONS } from './constants';
+import { MT_SCOPE_KEY, MT_OPTIONS, DEFAULT_OPTIONS } from './constants';
 import { injectTenancyService } from './decorators/entity';
 
 @Injectable()
 export class CoreService {
   protected transport: Transport;
-  protected readonly cls = new ContinuationLocalStorage<TenancyScope>();
 
-  constructor(@Inject(MT_OPTIONS) private options: Options) {
+  constructor(
+    @Inject(MT_OPTIONS) private options: Options,
+    private readonly asyncContext: AsyncContext,
+  ) {
     this.setup(options);
   }
 
-  async withTenancyScope(
+  async runWithinTenancyScope(
     context: TenantContext,
     handler: Function,
-  ): Promise<any> {
-    this.cls.setContext({
+  ): Promise<void> {
+    this.asyncContext.register();
+    this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
       tenant: await this.getTenant(context),
       enabled: true,
     });
-    return handler();
+    handler();
   }
 
   async setTenant(
@@ -41,12 +49,10 @@ export class CoreService {
       throw new NotAcceptableException(`Tenant "${tenant}" not allowed`);
     }
 
-    this.cls.setContext({ tenant, enabled: true });
-    return this;
-  }
-
-  disableTenancyForCurrentScope(): CoreService {
-    this.cls.setContext({ tenant: null, enabled: true });
+    this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
+      tenant,
+      enabled: true,
+    });
     return this;
   }
 
@@ -60,8 +66,31 @@ export class CoreService {
     return tenant || this.options.defaultTenant;
   }
 
+  disableTenancyForCurrentScope(): CoreService {
+    this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
+      ...this.tenancyScope,
+      enabled: false,
+    });
+    return this;
+  }
+
   get tenancyScope(): TenancyScope {
-    return this.cls.getContext();
+    try {
+      return (
+        this.asyncContext.get<typeof MT_SCOPE_KEY, TenancyScope>(
+          MT_SCOPE_KEY,
+        ) || this.defaultTenancyScope
+      );
+    } catch (e) {
+      return this.defaultTenancyScope;
+    }
+  }
+
+  get defaultTenancyScope(): TenancyScope {
+    return {
+      tenant: this.options.defaultTenant,
+      enabled: true,
+    };
   }
 
   get tenancyOptions(): Options {
@@ -72,19 +101,17 @@ export class CoreService {
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
 
     switch (this.options.transport) {
-      case TenantTransport.HEADER:
-        this.transport = new HeaderTransport(this.options.headerName);
+      case TenantTransport.HTTP:
+        this.transport = new HttpTransport(
+          this.options.headerName,
+          this.options.queryParameterName,
+        );
         break;
       default:
         throw new BaseError(
           `Unknown tenant transport "${this.options.transport}"`,
         );
     }
-
-    this.cls.setRootContext({
-      tenant: this.options.defaultTenant,
-      enabled: true,
-    });
 
     for (const entity of this.options.for) {
       injectTenancyService(entity as TenantEntity, this);

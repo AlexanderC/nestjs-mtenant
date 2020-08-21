@@ -1,23 +1,36 @@
-import { Module, DynamicModule, Global, Provider } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import {
+  Module,
+  DynamicModule,
+  Global,
+  Provider,
+  MiddlewareConsumer,
+  RequestMethod,
+  NestModule,
+} from '@nestjs/common';
+import { AsyncHooksModule } from '@nestjs-steroids/async-context';
 import { ValueProvider } from '@nestjs/common/interfaces';
 import { Options } from './interfaces/module.options';
 import { AsyncOptions } from './interfaces/module-async.options';
 import { OptionsFactory } from './interfaces/module-options.factory';
 import { CoreService } from './core.service';
 import { MT_OPTIONS } from './constants';
-import { TenancyInterceptor } from './interceptors/tenancy.interceptor';
+import { TenancyMiddleware } from './middlewares/tenancy.middleware';
 
 @Global()
 @Module({
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TenancyInterceptor,
-    },
-  ],
+  imports: [AsyncHooksModule],
 })
-export class CoreModule {
+export class CoreModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(TenancyMiddleware).forRoutes({
+      // The fastify package uses the latest version of the path-to-regexp package,
+      // which no longer supports wildcard asterisks *.
+      // Instead, you must use parameters (e.g., (.*), :splat*).
+      path: '(.*)',
+      method: RequestMethod.ALL,
+    });
+  }
+
   static forRoot(options?: Options): DynamicModule {
     const OptionsProvider: ValueProvider<Options> = {
       provide: MT_OPTIONS,

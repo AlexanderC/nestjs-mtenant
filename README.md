@@ -16,6 +16,8 @@
 
 ### Rationale
 
+*Warning: This module is wased on `async_hooks`, which is still an experimental feature. Use it on your own risk!*
+
 Multitenancy is widely used acros the web as software deployment options called **whitelabels**. Data in between tenants are separated,
 however nowadays there is business by sharing data inbetween the peer businesses; as an example might serve a E-commerce platform that shares
 their clients with twin/friendly shop, or there's some unified backoffice interface... Thus a good idea would be
@@ -93,8 +95,9 @@ import { MTModule, MTModuleOptions } from 'nestjs-mtenant';
 > ```typescript
 > export interface MTModuleOptions {
 >   for: Array<TenantEntity | Function>, // Entities to handle, e.g. [BookModel, UserModel]
->   transport?: TenantTransport; // Tenant transport: header
->   headerName?: string; // Header name to extract tenant from (if transport=header specified)
+>   transport?: TenantTransport; // Tenant transport: http
+>   headerName?: string; // Header name to extract tenant from (if transport=http specified)
+>   queryParameterName?: string; // Query parameter name to extract tenant from (if transport=http specified)
 >   defaultTenant?: string; // Tenant to assign by default
 >   allowTenant?: (context: TenantContext, tenant: string) => boolean; // Allow certain requested tenant
 >   allowMissingTenant?: boolean; // Get both IS NULL and tenant scopes on querying
@@ -104,7 +107,7 @@ import { MTModule, MTModuleOptions } from 'nestjs-mtenant';
 ### Usage
 
 There's literally nothing to configure, expect a decorator 
-to enrich Swagger docs by adding description of tenancy transport (e.g. through an `@ApiHeader()`)
+to enrich Swagger docs by adding description of tenancy transport (e.g. through an `@ApiHeader()` and an `@ApiQuery()`)
 in your controllers that support multi-tenancy:
 
 ```typescript
@@ -112,7 +115,12 @@ import { MTApi } from 'nestjs-mtenant';
 
 @MTApi()
 @Controller()
-export class BooksController { }
+export class BooksController {
+  // If "includeQuery=true" parameter specified, it will allow
+  // setting tenant via MT_QUERY_PARAMETER_NAME query param.
+  @MTApi({ includeQuery: true })
+  someAction() {  }
+}
 ```
 
 > Tenancy scope taken from the transport specified will be injected into instances and queries.
@@ -154,6 +162,9 @@ export class UsersService {
 
   // Will enforce using it for subsequent model operations within the scope
   // e.g. (await BooksService.useCustomTenant('custom-one')).create(...)
+  // This might be set in controllers as well, when taking from a DTO when
+  // there's no option to use a header.
+  // Optionally you might set MT_QUERY_PARAMETER_NAME query paremeter to achieve the same...
   async useCustomTenant(tenant: string) {
     await this.tenancyService.setTenant(tenant);
     return this;

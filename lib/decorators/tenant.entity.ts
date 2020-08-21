@@ -40,7 +40,6 @@ export function injectInstanceWithTenantProperty(
   }
 
   const service = tenancyService(target);
-  console.log('INJECTED TENANCY', target.name, service.tenancyScope);
 
   // do nothing if tenancy disabled
   if (!service.tenancyScope.enabled) {
@@ -63,7 +62,6 @@ export function injectQueryScopeWithTenantProperty(
   }
 
   const service = tenancyService(target);
-  console.log('INJECTED TENANCY', target.name, service.tenancyScope);
 
   // do nothing if tenancy disabled
   if (!service.tenancyScope.enabled) {

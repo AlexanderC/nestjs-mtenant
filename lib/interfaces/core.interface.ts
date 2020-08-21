@@ -1,9 +1,13 @@
 export enum TenantTransport {
-  HEADER = 'header',
+  HTTP = 'http',
 }
 
 // ExpressRequest or FastifyRequest
-export type TenantContext = { headers?: { [key: string]: string } };
+export type TenantContext = {
+  headers?: { [key: string]: string };
+  query?: { [key: string]: string };
+  url?: string;
+};
 
 export interface TenancyScope {
   tenant: string;

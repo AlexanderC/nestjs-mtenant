@@ -46,7 +46,7 @@
     ]
   },
   "dependencies": {
-    "asyncctx": "^2.0.13"
+    "@nestjs-steroids/async-context": "^1.0.2"
   },
   "optionalDependencies": {
     "sequelize-typescript": "1.1.0",
@@ -59,6 +59,7 @@
     "@nestjs/cli": "^7.4.1",
     "@nestjs/common": "^7.3.2",
     "@nestjs/core": "^7.3.2",
+    "@nestjs/swagger": "^4.5.12",
     "@nestjs/schematics": "^7.0.0",
     "@nestjs/testing": "^7.1.1",
     "@types/ioredis": "^4.17.3",
