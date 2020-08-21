@@ -16,7 +16,7 @@
 
 ### Rationale
 
-*Warning: This module is wased on `async_hooks`, which is still an experimental feature. Use it on your own risk!*
+*Warning: This module is based on `async_hooks`, which is still an experimental feature. Use it on your own risk!*
 
 Multitenancy is widely used acros the web as software deployment options called **whitelabels**. Data in between tenants are separated,
 however nowadays there is business by sharing data inbetween the peer businesses; as an example might serve a E-commerce platform that shares
