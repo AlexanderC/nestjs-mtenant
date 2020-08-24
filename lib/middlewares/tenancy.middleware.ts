@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware, Scope } from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { CoreService } from '../core.service';
 import { TenantContext } from '../interfaces/core.interface';
 
