@@ -72,18 +72,39 @@ export default class Book extends Model<Book> {
 > }
 > ```
 
+*(OPTIONAL)* Configure tenant storage using sequelize adapter:
+```typescript
+// models/tenants-storage.model.ts
+import { TenantsStorageSequelizeModel } from 'nestjs-mtenant';
+
+export default class TenantsStorage extends TenantsStorageSequelizeModel<TenantsStorage> {  }
+```
+
 And finaly include the module and the service *(assume using [Nestjs Configuration](https://docs.nestjs.com/techniques/configuration))*:
 ```typescript
 // src/app.module.ts
-import { MTModule, MTModuleOptions } from 'nestjs-mtenant';
+import { MTModule, MTModuleOptions, SEQUELIZE_STORAGE, IOREDIS_CACHE } from 'nestjs-mtenant';
+import { TenantSettingsDto } from './tenancy/tenant-settings.dto';
+import TenantsStorage from '../models/tenants-storage.model';
+import User from '../models/user.model';
+import Book from '../models/book.model';
 
 @Module({
   imports: [
     MTModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        return configService.get<MTModuleOptions>('multitenancy');
+      imports: [ConfigModule, RedisModule],
+      inject: [ConfigService, RedisService],
+      useFactory: async (configService: ConfigService, redisService: RedisService) => {
+        return {
+          for: [User, Book],
+          // The below options are optional
+          storage: SEQUELIZE_STORAGE,
+          storageSettingsDto: TenantSettingsDto,
+          storageRepository: TenantsStorage,
+          cache: IOREDIS_CACHE,
+          cacheClient: <IORedis.Redis>await redisService.getClient(), 
+          cacheOptions: { expire: 600 }, // tenant cache expires in 10 minutes (default 1 hour)
+        };
       },
     }),
   ],
@@ -94,15 +115,25 @@ import { MTModule, MTModuleOptions } from 'nestjs-mtenant';
 > 
 > ```typescript
 > export interface MTModuleOptions {
->   for: Array<TenantEntity | Function>, // Entities to handle, e.g. [BookModel, UserModel]
->   transport?: TenantTransport; // Tenant transport: http
->   headerName?: string; // Header name to extract tenant from (if transport=http specified)
->   queryParameterName?: string; // Query parameter name to extract tenant from (if transport=http specified)
->   defaultTenant?: string; // Tenant to assign by default
->   allowTenant?: (context: TenantContext, tenant: string) => boolean; // Allow certain requested tenant
->   allowMissingTenant?: boolean; // Get both IS NULL and tenant scopes on querying
+>  for: Array<TenantEntity | Function>, // Entities to handle, e.g. [BookModel, UserModel]
+>  transport?: TenantTransport; // Tenant transport: http
+>  headerName?: string; // Header name to extract tenant from (if transport=http specified)
+>  queryParameterName?: string; // Query parameter name to extract tenant from (if transport=http specified)
+>  defaultTenant?: string; // Tenant to assign by default
+>  allowTenant?: (context: TenantContext, tenant: string) => boolean; // Allow certain requested tenant, augmented by tenant storage if setup
+>  allowMissingTenant?: boolean; // Get both IS NULL and tenant scopes on querying
+>  storage?: string | Storage; // dynamic tenant storage (e.g. sequelize)
+>  storageSettingsDto?: any, // Tenant settings interface
+>  storageRepository?: any; // if database storage specified
+>  cache?: string | Cache; // if storage specified! dynamic tenant storage cache (e.g. ioredis)
+>  cacheClient?: any; // if cache adapter specified
+>  cacheOptions?: CachedStorageOptions; // if cache adapter specified
 > }
 > ```
+
+> Important: if `storage` is setup- `allowTenant` is augmented by storage manager.
+> Which would mean that the manager checks if tenant exists in the storage itself and pass it to next to `allowTenant` guard
+> (otherwise returning false, `allowTenant` not being called at all; *@ref `MTService.isTenantAllowed()`*).
 
 ### Usage
 
@@ -178,6 +209,85 @@ export class UsersService {
   }
 }
 ```
+
+Typical stored tenants manager service (*if `storage` setup*):
+
+```typescript
+// src/tenancy/tenant-settings.dto.ts
+export class TenantSettingsDto {
+  someSetting?: string,
+  otherOne?: any,
+}
+
+// src/tenancy/tenancy.service.ts
+import { Injectable } from '@nestjs/common';
+import { MTService, StoredTenantEntity } from 'nestjs-mtenant';
+import { TenantSettingsDto } from './tenant-settings.dto';
+
+@Injectable()
+export class TenancyService {
+  constructor(
+    private readonly tenancyService: MTService,
+  ) { }
+
+  async setting(name: keyof TenantSettingsDto, defaultValue: any): Promise<any> {
+    const { tenant } = this.tenancyService.tenancyScope;
+
+    if (tenant === this.tenancyService.defaultTenancyScope.tenant) {
+      return defaultValue;
+    }
+
+    const tenantEntity = await this.get(tenant);
+
+    if (!tenantEntity) {
+      return defaultValue;
+    }
+
+    return (tenantEntity as StoredTenantEntity<TenantSettingsDto>).settings[name] || defaultValue;
+  }
+
+  async add(tenant: string, settings: TenantSettingsDto):
+    Promise<StoredTenantEntity<TenantSettingsDto>> {
+    return this.tenancyService.storage.add(tenant, settings);
+  }
+
+  async remove(tenant: string): Promise<number> {
+    return this.tenancyService.storage.remove(tenant);
+  }
+
+  async exists(tenant: string): Promise<Boolean> {
+    return this.tenancyService.storage.exists(tenant);
+  }
+
+  async updateSettings(tenant: string, settings: TenantSettingsDto):
+    Promise<StoredTenantEntity<TenantSettingsDto>> {
+    return this.tenancyService.storage.updateSettings(tenant, settings);
+  }
+
+  async get(tenant?: string):
+    Promise<StoredTenantEntity<TenantSettingsDto> | Array<StoredTenantEntity<TenantSettingsDto>>> {
+    return this.tenancyService.storage.get(tenant);
+  }
+}
+```
+
+> Storage interface reference (*where `T === typeof TenantSettingsDto`*):
+> 
+> ```typescript
+> export interface TenantEntity<T> {
+>   tenant: string,
+>   settings: T,
+> }
+>
+> export interface Storage<T> {
+>   add(tenant: string, settings?: T): Promise<TenantEntity<T>>;
+>   remove(tenant: string): Promise<number>;
+>   exists(tenant: string): Promise<Boolean>;
+>   updateSettings(tenant: string, settings: T): Promise<TenantEntity<T>>;
+>   get(tenant: string): Promise<TenantEntity<T>>;
+> }
+> ```
+
 
 `nestjs-mtenant` integrates pretty well with the [`nestjs-iacry`](https://github.com/AlexanderC/nestjs-iacry#readme) module:
 

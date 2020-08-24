@@ -3,6 +3,8 @@ export { CoreModule as MTModule } from './core.module';
 
 /** Constants **/
 export {
+  SEQUELIZE_STORAGE,
+  IOREDIS_CACHE,
   MT_SCOPE_KEY,
   MT_OPTIONS,
   MT_HEADER_NAME,
@@ -10,6 +12,7 @@ export {
   DEFAULT_TRANSPORT,
   DEFAULT_TENANT,
   DEFAULT_OPTIONS,
+  DEFAULT_SETTINGS_DTO,
 } from './constants';
 export {
   DISABLE_TENANCY_OPTION,
@@ -38,6 +41,9 @@ export {
 } from './decorators/entity';
 export { Api as MTApi, ApiOptions as MTApiOptions } from './decorators/api';
 
+/** Models **/
+export { TenantsStorage as TenantsStorageSequelizeModel } from './storages/sequelize/storage.model';
+
 /** Internals */
 export {
   TenantEntity,
@@ -49,7 +55,12 @@ export {
   TenancyScope,
   TenantGuard,
 } from './interfaces/core.interface';
+export {
+  Storage,
+  TenantEntity as StoredTenantEntity,
+} from './interfaces/storage.interface';
 export { Transport } from './transports/transport.interface';
+export { Cache } from './storages/cache/cache.interface';
 
 /** Errors */
 export { BaseError as MTError } from './errors/mtenant.error';

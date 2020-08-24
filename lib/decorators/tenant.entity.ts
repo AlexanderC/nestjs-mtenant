@@ -3,7 +3,7 @@ import { Model, addHook } from 'sequelize-typescript';
 import { TenancyEntityOptions } from '../interfaces/core.interface';
 import { isTenantEntity, getTenancyService } from './entity';
 import { CoreService } from '../core.service';
-import { DISABLE_TENANCY_OPTION } from './constants';
+import { DISABLE_TENANCY_OPTION, HOOK_METHOD_PREFIX } from './constants';
 import { DecoratorError } from '../errors/decorator.error';
 
 function tenancyService(target: typeof Model): CoreService {
@@ -204,7 +204,7 @@ export function enhanceTenantEntity(
   tenancyOptions: TenancyEntityOptions,
 ) {
   for (const hook of hooks) {
-    const hookMethod = `__mt__$${hook.name}`;
+    const hookMethod = `${HOOK_METHOD_PREFIX}$${hook.name}`;
     target[hookMethod] = hook(target, tenancyOptions);
     addHook(target, <any>hook.name, hookMethod);
   }
