@@ -294,7 +294,7 @@ export class TenancyService {
 ```typescript
 // models/user.model.ts
 import { IACryEntity } from 'nestjs-iacry';
-import { MTEntity } from 'nestjs-mtenant';
+import { MTEntity, DEFAULT_TENANT } from 'nestjs-mtenant';
 
 @MTEntity() 
 @IACryEntity({ nameField: 'principal' })
@@ -307,20 +307,27 @@ export default class User extends Model<User> {
   // Get principals like "root/admin:33"
   @Column(DataType.VIRTUAL)
   get principal() {
-    return `${this.getDataValue('tenant')}/${this.getDataValue('role')}`;
+    return `${this.getDataValue('tenant') || DEFAULT_TENANT}/${this.getDataValue('role')}`;
   }
 }
 ```
 
-An example of `nestjs-iacry` policy would look like:
+A typical example of `nestjs-iacry` policies would look like:
 
 ```typescript
 // Allow everything for admins from any tenant
-{
-  Effect: Effect.ALLOW,
-  Action: '*',
-  Principal: `*/${UserRoles.Admin}`,
-}
+[
+  {
+    Effect: Effect.ALLOW,
+    Action: '!tenancy', // allow anything but tenancy related stuff
+    Principal: `*/${UserRoles.Admin}`,
+  },
+  {
+    Effect: Effect.ALLOW,
+    Action: '*',
+    Principal: `${DEFAULT_TENANT}/${UserRoles.Admin}`,
+  },
+]
 ```
 
 ### Development
