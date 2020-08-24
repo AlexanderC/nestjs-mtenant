@@ -26,8 +26,8 @@ export class TenantsStorage<T> extends Model<TenantsStorage<T>> {
   @Column
   tenant: string;
 
-  @Column(DataType.BLOB) // 64 kb of data
   @AllowNull(true)
+  @Column(DataType.BLOB) // 64 kb of data
   settings: string;
 
   @CreatedAt
