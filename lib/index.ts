@@ -1,5 +1,5 @@
 /** Modules **/
-export { CoreModule as MTModule } from './core.module';
+export { MtenantModule as MTModule } from './mtenant.module';
 
 /** Constants **/
 export {
@@ -29,7 +29,7 @@ export { AsyncOptions as MTModuleAsyncOptions } from './interfaces/module-async.
 export { OptionsFactory as MTModuleOptionsFactory } from './interfaces/module-options.factory';
 
 /** Services **/
-export { CoreService as MTService } from './core.service';
+export { MtenantService as MTService } from './mtenant.service';
 
 /** Middlewares */
 export { TenancyMiddleware } from './middlewares/tenancy.middleware';

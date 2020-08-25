@@ -25,7 +25,7 @@ import {
 } from './constants';
 
 @Injectable()
-export class CoreService {
+export class MtenantService {
   protected transport: Transport;
   public storage: Storage<unknown>;
 
@@ -51,7 +51,7 @@ export class CoreService {
   async setTenant(
     tenant: string,
     context?: TenantContext,
-  ): Promise<CoreService> {
+  ): Promise<MtenantService> {
     if (!(await this.isTenantAllowed(context || {}, tenant))) {
       throw new NotAcceptableException(`Tenant "${tenant}" not allowed`);
     }
@@ -90,7 +90,7 @@ export class CoreService {
     return this.options.allowTenant(context, tenant);
   }
 
-  disableTenancyForCurrentScope(): CoreService {
+  disableTenancyForCurrentScope(): MtenantService {
     this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
       ...this.tenancyScope,
       enabled: false,

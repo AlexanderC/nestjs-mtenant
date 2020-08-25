@@ -9,7 +9,7 @@ import {
   TenantEntity,
 } from '../interfaces/core.interface';
 import { enhanceTenantEntity } from './tenant.entity';
-import { CoreService } from '../core.service';
+import { MtenantService } from '../mtenant.service';
 
 export interface EntityOptions {
   tenantField?: string;
@@ -26,12 +26,12 @@ export function isTenantEntity(target: unknown): target is TenantEntity {
 
 export function injectTenancyService(
   target: TenantEntity,
-  service: CoreService,
+  service: MtenantService,
 ): void {
   Reflect.defineMetadata(TENANCY_SERVICE_METADATA_FIELD, service, target);
 }
 
-export function getTenancyService(target: TenantEntity): CoreService {
+export function getTenancyService(target: TenantEntity): MtenantService {
   return Reflect.hasMetadata(TENANCY_SERVICE_METADATA_FIELD, target)
     ? Reflect.getMetadata(TENANCY_SERVICE_METADATA_FIELD, target)
     : null;

@@ -42,11 +42,11 @@ export class SequelizeStorage<T> implements Storage<T> {
       });
     }
 
-    const { settings } = await (<TenantEntity<T>>(
-      this.storageRepository.findOne({
+    const { settings } = await (<TenantEntity<T>>this.storageRepository.findOne(
+      {
         where: { tenant },
         attributes: ['settings'],
-      })
+      },
     ));
 
     return { tenant, settings: this.decode((<any>settings) as string) };

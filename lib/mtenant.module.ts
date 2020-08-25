@@ -12,7 +12,7 @@ import { ValueProvider } from '@nestjs/common/interfaces';
 import { Options } from './interfaces/module.options';
 import { AsyncOptions } from './interfaces/module-async.options';
 import { OptionsFactory } from './interfaces/module-options.factory';
-import { CoreService } from './core.service';
+import { MtenantService } from './mtenant.service';
 import { MT_OPTIONS } from './constants';
 import { TenancyMiddleware } from './middlewares/tenancy.middleware';
 
@@ -20,7 +20,7 @@ import { TenancyMiddleware } from './middlewares/tenancy.middleware';
 @Module({
   imports: [AsyncHooksModule],
 })
-export class CoreModule implements NestModule {
+export class MtenantModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(TenancyMiddleware).forRoutes({
       // The fastify package uses the latest version of the path-to-regexp package,
@@ -38,9 +38,9 @@ export class CoreModule implements NestModule {
     };
 
     return {
-      module: CoreModule,
-      providers: [OptionsProvider, CoreService],
-      exports: [CoreService],
+      module: MtenantModule,
+      providers: [OptionsProvider, MtenantService],
+      exports: [MtenantService],
     };
   }
 
@@ -48,10 +48,10 @@ export class CoreModule implements NestModule {
     const providers: Provider[] = this.createAsyncProviders(options);
 
     return {
-      module: CoreModule,
-      providers: [...providers, CoreService],
+      module: MtenantModule,
+      providers: [...providers, MtenantService],
       imports: options.imports,
-      exports: [CoreService],
+      exports: [MtenantService],
     };
   }
 
