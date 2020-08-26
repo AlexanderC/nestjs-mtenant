@@ -34,6 +34,7 @@ export class CachedStorage<T> implements Storage<T> {
   }
 
   async add(tenant: string, settings?: T): Promise<TenantEntity<T>> {
+    await this.purgeCache(tenant);
     return this.storage.add(tenant, settings);
   }
 
