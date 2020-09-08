@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  **[WIP]** A module to enable multitenancy support with deep integration into the system as whole.
+  A module to enable multitenancy support with deep integration into the system as whole.
 </p>
 
 <p align="center">
