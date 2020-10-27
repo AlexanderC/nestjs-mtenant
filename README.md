@@ -137,7 +137,7 @@ import Book from '../models/book.model';
 
 ### Usage
 
-There's literally nothing to configure, expect a decorator 
+There's literally nothing to configure, except a decorator 
 to enrich Swagger docs by adding description of tenancy transport (e.g. through an `@ApiHeader()` and an `@ApiQuery()`)
 in your controllers that support multi-tenancy:
 
@@ -210,7 +210,7 @@ export class UsersService {
 }
 ```
 
-Typical stored tenants manager service (*if `storage` setup*):
+Typical stored tenants manager service (*if `storage` option configured*):
 
 ```typescript
 // src/tenancy/tenant-settings.dto.ts
