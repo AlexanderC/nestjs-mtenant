@@ -31,7 +31,7 @@ export class MtenantService {
 
   constructor(
     @Inject(MT_OPTIONS) protected options: Options,
-    private readonly asyncContext: AsyncContext,
+    private readonly asyncContext: AsyncContext<string, any>,
   ) {
     this.setup(options);
   }
@@ -41,7 +41,7 @@ export class MtenantService {
     handler: Function,
   ): Promise<void> {
     this.asyncContext.register();
-    this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
+    this.asyncContext.set(MT_SCOPE_KEY, {
       tenant: await this.getTenant(context),
       enabled: true,
     });
@@ -56,7 +56,7 @@ export class MtenantService {
       throw new NotAcceptableException(`Tenant "${tenant}" not allowed`);
     }
 
-    this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
+    this.asyncContext.set(MT_SCOPE_KEY, {
       tenant,
       enabled: true,
     });
@@ -91,7 +91,7 @@ export class MtenantService {
   }
 
   disableTenancyForCurrentScope(): MtenantService {
-    this.asyncContext.set<typeof MT_SCOPE_KEY, TenancyScope>(MT_SCOPE_KEY, {
+    this.asyncContext.set(MT_SCOPE_KEY, {
       ...this.tenancyScope,
       enabled: false,
     });
@@ -177,11 +177,7 @@ export class MtenantService {
 
   get tenancyScope(): TenancyScope {
     try {
-      return (
-        this.asyncContext.get<typeof MT_SCOPE_KEY, TenancyScope>(
-          MT_SCOPE_KEY,
-        ) || this.defaultTenancyScope
-      );
+      return this.asyncContext.get(MT_SCOPE_KEY) || this.defaultTenancyScope;
     } catch (e) {
       return this.defaultTenancyScope;
     }
