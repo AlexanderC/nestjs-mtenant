@@ -7,7 +7,7 @@ import {
   RequestMethod,
   NestModule,
 } from '@nestjs/common';
-import { AsyncHooksModule } from '@nestjs-steroids/async-context';
+import { AsyncContextModule } from '@nestjs-steroids/async-context';
 import { ValueProvider } from '@nestjs/common/interfaces';
 import { Options } from './interfaces/module.options';
 import { AsyncOptions } from './interfaces/module-async.options';
@@ -18,7 +18,7 @@ import { TenancyMiddleware } from './middlewares/tenancy.middleware';
 
 @Global()
 @Module({
-  imports: [AsyncHooksModule],
+  imports: [AsyncContextModule.forRoot()],
 })
 export class MtenantModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
