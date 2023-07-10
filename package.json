@@ -1,6 +1,6 @@
 {
   "name": "nestjs-mtenant",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "NestJS - a module to enable multitenancy support with deep integration into the system as whole",
   "keywords": [
