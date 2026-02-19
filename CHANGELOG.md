@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/AlexanderC/nestjs-mtenant/compare/v0.1.1...v2.0.0) (2026-02-19)
+
+
+### Bug Fixes
+
+* add release script ([fdf20b8](https://github.com/AlexanderC/nestjs-mtenant/commit/fdf20b8df9ec220f7ccdd369d9f5922e26103188))
+
 ### [0.1.1](https://github.com/AlexanderC/nestjs-mtenant/compare/v0.1.0...v0.1.1) (2023-07-10)
 
 ## [0.1.0](https://github.com/AlexanderC/nestjs-mtenant/compare/v0.0.3...v0.1.0) (2023-06-29)
