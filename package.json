@@ -30,6 +30,7 @@
     "deploy": "sh ./publish.sh",
     "format": "prettier --write \"lib/**/*.ts\"",
     "lint": "eslint \"lib/**/*.ts\"",
+    "release": "npx standard-version",
     "major": "npm run release -- --release-as major",
     "minor": "npm run release -- --release-as minor",
     "patch": "npm run release -- --release-as patch",
