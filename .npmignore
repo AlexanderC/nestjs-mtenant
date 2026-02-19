@@ -19,3 +19,10 @@ renovate.json
 .prettierignore
 .prettierrc
 publish.sh
+jest.config.js
+coverage
+.husky
+
+# specs
+**/*.spec.ts
+**/*.spec.js

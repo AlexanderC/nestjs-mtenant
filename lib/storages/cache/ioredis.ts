@@ -1,11 +1,11 @@
 import { Cache } from './cache.interface';
-import * as IORedis from 'ioredis';
+import Redis from 'ioredis';
 
 export class IoRedis implements Cache {
   private readonly SUCCESS = 'OK';
   private readonly EXPIRE = 'EX';
 
-  constructor(public readonly client: IORedis.Redis) {}
+  constructor(public readonly client: Redis) {}
 
   async set(key: string, value: string, expire?: number): Promise<boolean> {
     if (!expire) {

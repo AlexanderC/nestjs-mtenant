@@ -9,8 +9,10 @@ import { TenantTransport } from '../interfaces/core.interface';
 import { Options } from '../interfaces/module.options';
 import { BaseError } from '../errors/mtenant.error';
 
-export interface ApiOptions
-  extends Pick<Options, 'transport' | 'headerName' | 'queryParameterName'> {
+export interface ApiOptions extends Pick<
+  Options,
+  'transport' | 'headerName' | 'queryParameterName'
+> {
   includeQuery?: boolean;
 }
 

@@ -1,0 +1,4 @@
+title: nestjs-mtenant
+description: NestJS Multi-Tenancy Module for Sequelize and TypeORM
+theme: jekyll-theme-cayman
+baseurl: /nestjs-mtenant

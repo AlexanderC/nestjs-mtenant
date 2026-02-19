@@ -4,6 +4,7 @@ export { MtenantModule as MTModule } from './mtenant.module';
 /** Constants **/
 export {
   SEQUELIZE_STORAGE,
+  TYPEORM_STORAGE,
   IOREDIS_CACHE,
   MT_SCOPE_KEY,
   MT_OPTIONS,
@@ -18,6 +19,7 @@ export {
   DISABLE_TENANCY_OPTION,
   TENANCY_SERVICE_METADATA_FIELD,
   TENANT_ENTITY_METADATA_FIELD,
+  TENANT_ENTITY_OPTIONS_METADATA_FIELD,
   TENANT_FIELD,
   ID_FIELD,
   DEFAULT_ENTITY_OPTIONS,
@@ -38,11 +40,19 @@ export { TenancyMiddleware } from './middlewares/tenancy.middleware';
 export {
   Entity as MTEntity,
   EntityOptions as MTEntityOptions,
+  isTenantEntityMetadata,
 } from './decorators/entity';
 export { Api as MTApi, ApiOptions as MTApiOptions } from './decorators/api';
 
-/** Models **/
+/** Sequelize Models **/
 export { TenantsStorage as TenantsStorageSequelizeModel } from './storages/sequelize/storage.model';
+
+/** TypeORM **/
+export { TenantEntitySubscriber } from './subscribers/tenant-entity.subscriber';
+export { TenantBaseRepository } from './repositories/tenant-base.repository';
+export { TenantsStorageTypeOrm as TenantsStorageTypeOrmEntity } from './storages/typeorm/storage.entity';
+export { TypeOrmStorage } from './storages/typeorm.storage';
+export { TypeOrmError as MTTypeOrmError } from './storages/typeorm/typeorm.error';
 
 /** Internals */
 export {

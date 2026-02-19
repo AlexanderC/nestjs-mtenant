@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotAcceptableException } from '@nestjs/common';
-import { AsyncContext } from '@nestjs-steroids/async-context';
+import { ClsService } from 'nestjs-cls';
 import { BaseError } from './errors/mtenant.error';
 import { Options } from './interfaces/module.options';
 import { injectTenancyService } from './decorators/entity';
@@ -18,6 +18,7 @@ import { Storage } from './interfaces/storage.interface';
 import { SequelizeStorage } from './storages/sequelize.storage';
 import {
   SEQUELIZE_STORAGE,
+  TYPEORM_STORAGE,
   IOREDIS_CACHE,
   MT_SCOPE_KEY,
   MT_OPTIONS,
@@ -31,7 +32,7 @@ export class MtenantService {
 
   constructor(
     @Inject(MT_OPTIONS) protected options: Options,
-    private readonly asyncContext: AsyncContext<string, any>,
+    private readonly cls: ClsService,
   ) {
     this.setup(options);
   }
@@ -40,8 +41,7 @@ export class MtenantService {
     context: TenantContext,
     handler: Function,
   ): Promise<void> {
-    this.asyncContext.register();
-    this.asyncContext.set(MT_SCOPE_KEY, {
+    this.cls.set(MT_SCOPE_KEY, {
       tenant: await this.getTenant(context),
       enabled: true,
     });
@@ -56,7 +56,7 @@ export class MtenantService {
       throw new NotAcceptableException(`Tenant "${tenant}" not allowed`);
     }
 
-    this.asyncContext.set(MT_SCOPE_KEY, {
+    this.cls.set(MT_SCOPE_KEY, {
       tenant,
       enabled: true,
     });
@@ -91,7 +91,7 @@ export class MtenantService {
   }
 
   disableTenancyForCurrentScope(): MtenantService {
-    this.asyncContext.set(MT_SCOPE_KEY, {
+    this.cls.set(MT_SCOPE_KEY, {
       ...this.tenancyScope,
       enabled: false,
     });
@@ -125,6 +125,20 @@ export class MtenantService {
               this.storage = new SequelizeStorage<typeof SettingsDTO>(
                 this.options.storageRepository,
               );
+              break;
+            case TYPEORM_STORAGE:
+              try {
+                const {
+                  TypeOrmStorage,
+                } = require('./storages/typeorm.storage');
+                this.storage = new TypeOrmStorage(
+                  this.options.storageRepository,
+                );
+              } catch (e) {
+                throw new BaseError(
+                  'TypeORM storage requires typeorm to be installed',
+                );
+              }
               break;
             default:
               throw new BaseError(
@@ -173,11 +187,33 @@ export class MtenantService {
     for (const entity of this.options.for) {
       injectTenancyService(entity as TenantEntity, this);
     }
+
+    // Register TypeORM subscriber if dataSource is provided
+    if (this.options.dataSource) {
+      this.registerTypeOrmSubscriber(this.options.dataSource);
+    }
+  }
+
+  private registerTypeOrmSubscriber(dataSource: any): void {
+    try {
+      const {
+        TenantEntitySubscriber,
+      } = require('./subscribers/tenant-entity.subscriber');
+      const alreadyRegistered = dataSource.subscribers.some(
+        (s: any) => s instanceof TenantEntitySubscriber,
+      );
+      if (!alreadyRegistered) {
+        const subscriber = new TenantEntitySubscriber();
+        dataSource.subscribers.push(subscriber);
+      }
+    } catch (e) {
+      // TypeORM not installed; skip subscriber registration
+    }
   }
 
   get tenancyScope(): TenancyScope {
     try {
-      return this.asyncContext.get(MT_SCOPE_KEY) || this.defaultTenancyScope;
+      return this.cls.get(MT_SCOPE_KEY) || this.defaultTenancyScope;
     } catch (e) {
       return this.defaultTenancyScope;
     }

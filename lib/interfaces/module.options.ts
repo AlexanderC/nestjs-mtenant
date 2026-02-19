@@ -17,4 +17,5 @@ export interface Options {
   cache?: string | Cache; // if storage specified! dynamic policy storage cache (e.g. ioredis)
   cacheClient?: any; // if cache adapter specified
   cacheOptions?: CachedStorageOptions; // if cache adapter specified
+  dataSource?: any; // TypeORM DataSource for automatic subscriber registration
 }

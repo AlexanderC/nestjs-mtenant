@@ -1,10 +1,10 @@
 import * as Sequelize from 'sequelize';
 import { Model, addHook } from 'sequelize-typescript';
-import { TenancyEntityOptions } from '../interfaces/core.interface';
-import { isTenantEntity, getTenancyService } from './entity';
-import { MtenantService } from '../mtenant.service';
-import { DISABLE_TENANCY_OPTION, HOOK_METHOD_PREFIX } from './constants';
-import { DecoratorError } from '../errors/decorator.error';
+import { TenancyEntityOptions } from '../../interfaces/core.interface';
+import { isTenantEntity, getTenancyService } from '../entity';
+import { MtenantService } from '../../mtenant.service';
+import { DISABLE_TENANCY_OPTION, HOOK_METHOD_PREFIX } from '../constants';
+import { DecoratorError } from '../../errors/decorator.error';
 
 function tenancyService(target: typeof Model): MtenantService {
   const service = getTenancyService(<any>target);
